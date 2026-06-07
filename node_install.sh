@@ -14,6 +14,11 @@ apt autoremove -y
 
 apt install -y curl wget git socat net-tools ufw
 
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 2222/tcp
+
 echo "Installing Remnawave Reverse Proxy..."
 
 bash <(curl -Ls "https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh")
