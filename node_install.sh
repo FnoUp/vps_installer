@@ -21,7 +21,7 @@ ufw allow 2222/tcp
 
 echo "Installing Remnawave Reverse Proxy..."
 
-bash <(curl -Ls "https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh")
+bash <(curl -4 -Ls "https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh")
 
 echo "=================================="
 echo "Installation completed"
