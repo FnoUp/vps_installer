@@ -1,0 +1,23 @@
+#!/bin/bash
+
+echo "Updating system..."
+
+apt update && apt upgrade -y
+
+apt install -y \
+curl \
+socat \
+ufw \
+net-tools \
+git \
+wget \
+unzip \
+zip \
+jq \
+ca-certificates
+
+echo "Installing Remnawave Reverse Proxy..."
+
+bash <(curl -Ls https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh)
+
+echo "Done!"
