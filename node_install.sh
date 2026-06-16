@@ -30,6 +30,8 @@ ufw allow 80/tcp
 ufw allow 80/udp
 ufw allow 8443/tcp
 ufw allow 8443/udp
+ufw allow 9999/tcp
+ufw allow 9999/udp
 
 echo "Installing Remnawave Reverse Proxy..."
 
