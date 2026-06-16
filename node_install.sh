@@ -37,6 +37,10 @@ echo "Installing Remnawave Reverse Proxy..."
 
 bash <(curl -4 -Ls "https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh")
 
+ufw enable
+
 echo "=================================="
 echo "Installation completed"
 echo "=================================="
+
+reboot
