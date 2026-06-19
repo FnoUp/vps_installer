@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Выход при ошибке
 set -e
 
 echo "=================================="
@@ -9,21 +8,17 @@ echo "=================================="
 
 export DEBIAN_FRONTEND=noninteractive
 
-# Обновление системы
 apt update
 apt upgrade -y
 apt autoremove -y
 
-# Установка базовых утилит
 apt install -y curl wget git socat net-tools ufw
 
-# ИСПРАВЛЕНО: Правильное добавление репозитория Ookla Speedtest
-curl -s https://speedtest.net | sudo bash 
-
-# Установка Speedtest (официального и старого python-клиента)
+# ИСПРАВЛЕНИЕ ДЛЯ UBUNTU 24.04: маскируемся под jammy
+curl -s https://install.speedtest.net/app/cli/install.deb.sh | sed 's/noble/jammy/g' | sudo bash
 sudo apt install -y speedtest speedtest-cli
 
-# Настройка файрвола UFW (Дубликаты удалены)
+# Настройка файрвола UFW
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 80/udp
@@ -39,13 +34,12 @@ ufw allow 9999/tcp
 ufw allow 9999/udp
 
 echo "Installing Remnawave Reverse Proxy..."
-bash <(curl -4 -Ls "https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh")
+bash <(curl -4 -Ls "https://githubusercontent.com")
 
-# ИСПРАВЛЕНО: Включение файрвола без интерактивных вопросов
 ufw --force enable
 
 echo "=================================="
-echo "Installation completed. Rebooting..."
+echo "Installation completed"
 echo "=================================="
 
 reboot
