@@ -1,7 +1,5 @@
 #!/bin/bash
-
-# Выход из скрипта при возникновении любой ошибки
-set -e
+set -euo pipefail
 
 echo "=================================="
 echo "Ubuntu 24 VPS Base Installation"
@@ -9,35 +7,24 @@ echo "=================================="
 
 export DEBIAN_FRONTEND=noninteractive
 
-# Обновление списков пакетов и компонентов системы
+if [ "$EUID" -ne 0 ]; then
+  echo "Запусти скрипт от root"
+  exit 1
+fi
+
+echo "Updating system..."
 apt update
 apt upgrade -y
 apt autoremove -y
 
-# Установка базовых сетевых и системных утилит
-apt install -y curl wget git socat net-tools ufw gpg
+echo "Installing base packages..."
+apt install -y \
+  curl wget git socat net-tools ufw gpg ca-certificates \
+  iproute2 dnsutils iperf3 htop nano unzip jq
 
-# ГАРАНТИРОВАННОЕ ИСПРАВЛЕНИЕ ДЛЯ UBUNTU 24.04:
-# 1. Удаляем следы прошлых неудачных попыток, если они были
-rm -f /etc/apt/sources.list.d/ookla_speedtest-cli.list /etc/apt/sources.list.d/speedtest.list
+echo "Configuring firewall..."
+ufw --force reset
 
-# 2. Скачиваем официальный GPG-ключ Ookla напрямую
-mkdir -p /etc/apt/keyrings
-curl -fsSL https://packagecloud.io | gpg --dearmor -o /etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.gpg
-
-# 3. Создаем файл репозитория вручную, принудительно указав стабильную ветку "jammy"
-cat <<EOF > /etc/apt/sources.list.d/ookla_speedtest-cli.list
-deb [signed-by=/etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.gpg] https://packagecloud.io/ookla/speedtest-cli/ubuntu/ jammy main
-deb-src [signed-by=/etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.gpg] https://packagecloud.io/ookla/speedtest-cli/ubuntu/ jammy main
-EOF
-
-# 4. Обновляем кеш APT, чтобы он увидел добавленный репозиторий
-apt update
-
-# Установка официального speedtest и старой open-source версии
-apt install -y speedtest speedtest-cli
-
-# Настройка файрвола UFW (без дубликатов портов)
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 80/udp
@@ -52,16 +39,45 @@ ufw allow 8443/udp
 ufw allow 9999/tcp
 ufw allow 9999/udp
 
-echo "Installing Remnawave Reverse Proxy..."
-# Запуск официального скрипта установки Remnawave
-bash <(curl -4 -Ls "https://githubusercontent.com")
-
-# Принудительное включение файрвола без интерактивных запросов (Y/N)
 ufw --force enable
 
 echo "=================================="
-echo "Installation completed. Rebooting..."
+echo "Network information"
 echo "=================================="
 
-# Перезагрузка сервера для применения обновлений
-reboot
+echo "IP region information:"
+bash <(wget -qO- https://ipregion.vrntt.xyz) || true
+
+echo
+echo "Russian iPerf3 speedtest:"
+bash <(wget -qO- https://github.com/itdoginfo/russian-iperf3-servers/raw/main/speedtest.sh) || true
+
+echo "=================================="
+echo "Installing Remnawave Reverse Proxy"
+echo "=================================="
+
+bash <(curl -4 -Ls "https://githubusercontent.com")
+
+echo "=================================="
+echo "Installation completed"
+echo "=================================="
+
+echo
+echo "Manual test commands:"
+echo "IP region:"
+echo 'bash <(wget -qO- https://ipregion.vrntt.xyz)'
+echo
+echo "Russian iPerf3 speedtest:"
+echo 'bash <(wget -qO- https://github.com/itdoginfo/russian-iperf3-servers/raw/main/speedtest.sh)'
+
+echo
+read -r -p "Reboot server now? [y/N]: " reboot_answer
+
+case "$reboot_answer" in
+  y|Y|yes|YES)
+    reboot
+    ;;
+  *)
+    echo "Reboot skipped. Лучше перезагрузи сервер вручную позже: reboot"
+    ;;
+esac
