@@ -45,12 +45,16 @@ echo "=================================="
 echo "Network information"
 echo "=================================="
 
+echo
 echo "IP region information:"
-bash <(wget -qO- https://ipregion.vrntt.xyz) || true
+if ! timeout 120 bash <(curl -4 -fsSL https://ipregion.vrntt.xyz); then
+  echo "curl failed, trying wget..."
+  timeout 120 bash <(wget -4 -qO- https://ipregion.vrntt.xyz) || echo "IP region test failed or timed out"
+fi
 
 echo
 echo "Russian iPerf3 speedtest:"
-bash <(wget -qO- https://github.com/itdoginfo/russian-iperf3-servers/raw/main/speedtest.sh) || true
+timeout 220 bash <(wget -4 -qO- https://github.com/itdoginfo/russian-iperf3-servers/raw/main/speedtest.sh) || echo "iPerf3 speedtest failed or timed out"
 
 echo "=================================="
 echo "Installing Remnawave Reverse Proxy"
@@ -62,13 +66,6 @@ echo "=================================="
 echo "Installation completed"
 echo "=================================="
 
-echo
-echo "Manual test commands:"
-echo "IP region:"
-echo 'bash <(wget -qO- https://ipregion.vrntt.xyz)'
-echo
-echo "Russian iPerf3 speedtest:"
-echo 'bash <(wget -qO- https://github.com/itdoginfo/russian-iperf3-servers/raw/main/speedtest.sh)'
 
 echo
 read -r -p "Reboot server now? [y/N]: " reboot_answer
