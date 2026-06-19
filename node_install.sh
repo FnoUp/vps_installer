@@ -15,16 +15,29 @@ apt upgrade -y
 apt autoremove -y
 
 # Установка базовых сетевых и системных утилит
-apt install -y curl wget git socat net-tools ufw
+apt install -y curl wget git socat net-tools ufw gpg
 
-# Подключение репозитория Ookla Speedtest с Packagecloud
-# Подменяем кодовое имя 'noble' на 'jammy', так как официальной ветки для Ubuntu 24 пока нет
-curl -s https://packagecloud.io | sed 's/noble/jammy/g' | sudo bash
+# ГАРАНТИРОВАННОЕ ИСПРАВЛЕНИЕ ДЛЯ UBUNTU 24.04:
+# 1. Удаляем следы прошлых неудачных попыток, если они были
+rm -f /etc/apt/sources.list.d/ookla_speedtest-cli.list /etc/apt/sources.list.d/speedtest.list
+
+# 2. Скачиваем официальный GPG-ключ Ookla напрямую
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://packagecloud.io | gpg --dearmor -o /etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.gpg
+
+# 3. Создаем файл репозитория вручную, принудительно указав стабильную ветку "jammy"
+cat <<EOF > /etc/apt/sources.list.d/ookla_speedtest-cli.list
+deb [signed-by=/etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.gpg] https://packagecloud.io/ookla/speedtest-cli/ubuntu/ jammy main
+deb-src [signed-by=/etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.gpg] https://packagecloud.io/ookla/speedtest-cli/ubuntu/ jammy main
+EOF
+
+# 4. Обновляем кеш APT, чтобы он увидел добавленный репозиторий
+apt update
 
 # Установка официального speedtest и старой open-source версии
-sudo apt install -y speedtest speedtest-cli
+apt install -y speedtest speedtest-cli
 
-# Настройка файрвола UFW (все дубликаты портов удалены)
+# Настройка файрвола UFW (без дубликатов портов)
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 80/udp
