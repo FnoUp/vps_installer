@@ -13,7 +13,7 @@ apt upgrade -y
 apt autoremove -y
 
 apt install -y curl wget git socat net-tools ufw
-curl -s https://packagecloud.io | sudo bash
+curl -s https://packagecloud.io 
 sudo apt install speedtest
 sudo apt install speedtest-cli
 
