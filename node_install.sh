@@ -39,7 +39,6 @@ ufw allow 8443/udp
 ufw allow 9999/tcp
 ufw allow 9999/udp
 
-ufw --force enable
 
 echo "=================================="
 echo "Network information"
@@ -60,7 +59,9 @@ echo "=================================="
 echo "Installing Remnawave Reverse Proxy"
 echo "=================================="
 
-bash <(curl -4 -Ls "https://githubusercontent.com")
+bash <(curl -4 -Ls "https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh")
+
+ufw --force enable
 
 echo "=================================="
 echo "Installation completed"
