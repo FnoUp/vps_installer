@@ -13,6 +13,9 @@ apt upgrade -y
 apt autoremove -y
 
 apt install -y curl wget git socat net-tools ufw
+curl -s https://packagecloud.io | sudo bash
+sudo apt install speedtest
+sudo apt install speedtest-cli
 
 ufw allow 22/tcp
 ufw allow 80/tcp
