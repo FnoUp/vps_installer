@@ -14,9 +14,10 @@ apt autoremove -y
 
 apt install -y curl wget git socat net-tools ufw
 
-# ИСПРАВЛЕНИЕ ДЛЯ UBUNTU 24.04: маскируемся под jammy
-curl -s https://install.speedtest.net/app/cli/install.deb.sh | sed 's/noble/jammy/g' | sudo bash
+# Добавление корректного репозитория Ookla на Packagecloud со сдвигом версии
+curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sed 's/noble/jammy/g' | sudo bash
 sudo apt install -y speedtest speedtest-cli
+
 
 # Настройка файрвола UFW
 ufw allow 22/tcp
