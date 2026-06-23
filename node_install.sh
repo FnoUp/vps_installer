@@ -22,6 +22,16 @@ apt install -y \
   curl wget git socat net-tools ufw gpg ca-certificates \
   iproute2 dnsutils iperf3 htop nano unzip jq
 
+echo "Disabling IPv6..."
+
+cat > /etc/sysctl.d/99-disable-ipv6.conf << 'EOF'
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+EOF
+
+sysctl --system
+
 echo "Configuring firewall..."
 ufw --force reset
 
@@ -46,14 +56,11 @@ echo "=================================="
 
 echo
 echo "IP region information:"
-if ! timeout 120 bash <(curl -4 -fsSL https://ipregion.vrntt.xyz); then
-  echo "curl failed, trying wget..."
-  timeout 120 bash <(wget -4 -qO- https://ipregion.vrntt.xyz) || echo "IP region test failed or timed out"
-fi
+timeout 200 bash <(curl -4 -fsSL https://raw.githubusercontent.com/FnoUp/ipregion/master/ipregion.sh)
 
 echo
 echo "Russian iPerf3 speedtest:"
-timeout 220 bash <(curl -4 -fsSL https://raw.githubusercontent.com/FnoUp/ipregion/main/ipregion.sh)
+timeout 200 bash <(wget -4 -qO- https://github.com/itdoginfo/russian-iperf3-servers/raw/main/speedtest.sh) || echo "iPerf3 speedtest failed or timed out"
 
 echo "=================================="
 echo "Installing Remnawave Reverse Proxy"
