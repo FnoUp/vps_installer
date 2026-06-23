@@ -39,8 +39,42 @@ if [[ -z "$PANEL_IP" ]]; then
     error "IP панели не может быть пустым"
 fi
 
-read -rp "Сетевой интерфейс ноды (Enter = ens3): " NET_DEV
-NET_DEV="${NET_DEV:-ens3}"
+# ── Автовыбор сетевого интерфейса ─────────────────────────────
+# Собираем все интерфейсы кроме lo и docker/veth
+IFACES=()
+while IFS= read -r iface; do
+    IFACES+=("$iface")
+done < <(ip -o link show | awk -F': ' '{print $2}' | grep -vE '^lo$|^docker|^veth|^br-|^virbr')
+
+if [ "${#IFACES[@]}" -eq 0 ]; then
+    warn "Не удалось определить интерфейс, используем ens3"
+    NET_DEV="ens3"
+elif [ "${#IFACES[@]}" -eq 1 ]; then
+    NET_DEV="${IFACES[0]}"
+    # Показываем IP на этом интерфейсе
+    IFACE_IP=$(ip -4 addr show "$NET_DEV" 2>/dev/null | grep -oP '(?<=inet\s)\d+\.\d+\.\d+\.\d+' | head -1)
+    info "Найден интерфейс: ${YELLOW}$NET_DEV${NC} (IP: ${IFACE_IP:-нет IP})"
+    read -rp "Использовать его? (Enter = да, или введи другой): " NET_DEV_INPUT
+    NET_DEV="${NET_DEV_INPUT:-$NET_DEV}"
+else
+    echo ""
+    info "Найдено несколько интерфейсов:"
+    for i in "${!IFACES[@]}"; do
+        IFACE="${IFACES[$i]}"
+        IFACE_IP=$(ip -4 addr show "$IFACE" 2>/dev/null | grep -oP '(?<=inet\s)\d+\.\d+\.\d+\.\d+' | head -1)
+        echo "  $((i+1))) $IFACE   ${IFACE_IP:-нет IP}"
+    done
+    echo ""
+    read -rp "Выбери номер интерфейса (Enter = 1): " IFACE_NUM
+    IFACE_NUM="${IFACE_NUM:-1}"
+    # Проверяем что число валидное
+    if [[ "$IFACE_NUM" =~ ^[0-9]+$ ]] && [ "$IFACE_NUM" -ge 1 ] && [ "$IFACE_NUM" -le "${#IFACES[@]}" ]; then
+        NET_DEV="${IFACES[$((IFACE_NUM-1))]}"
+    else
+        warn "Неверный выбор, используем первый: ${IFACES[0]}"
+        NET_DEV="${IFACES[0]}"
+    fi
+fi
 
 echo ""
 info "Панель: $PANEL_IP"
