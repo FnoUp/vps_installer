@@ -53,7 +53,7 @@ fi
 
 echo
 echo "Russian iPerf3 speedtest:"
-timeout 220 bash <(wget -4 -qO- https://github.com/itdoginfo/russian-iperf3-servers/raw/main/speedtest.sh) || echo "iPerf3 speedtest failed or timed out"
+timeout 220 bash <(curl -4 -fsSL https://raw.githubusercontent.com/FnoUp/ipregion/main/ipregion.sh)
 
 echo "=================================="
 echo "Installing Remnawave Reverse Proxy"
