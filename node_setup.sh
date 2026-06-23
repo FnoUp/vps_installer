@@ -11,6 +11,11 @@
 
 set -e
 
+# Если запущен через bash <(curl ...), stdin занят — переключаем на терминал
+if [ ! -t 0 ]; then
+    exec < /dev/tty
+fi
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
