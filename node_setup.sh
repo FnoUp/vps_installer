@@ -165,17 +165,17 @@ echo "============================================"
 echo "   Проверка"
 echo "============================================"
 
-NODE_IP=$(curl -s ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
+NODE_IP=$(curl -s --max-time 3 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
 
 # node_exporter
-if curl -s "http://127.0.0.1:9100/metrics" | grep -q "node_boot_time"; then
+if curl -s --max-time 5 "http://127.0.0.1:9100/metrics" | grep -q "node_boot_time"; then
     success "node_exporter метрики доступны локально"
 else
     warn "node_exporter метрики не отвечают"
 fi
 
 # cAdvisor
-if curl -s "http://127.0.0.1:8080/metrics" | grep -q "container_"; then
+if curl -s --max-time 5 "http://127.0.0.1:8080/metrics" | grep -q "container_"; then
     success "cAdvisor метрики доступны локально"
 else
     warn "cAdvisor метрики не отвечают"
