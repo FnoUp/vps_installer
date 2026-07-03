@@ -62,13 +62,18 @@ echo "=================================="
 echo "Network information"
 echo "=================================="
 
-echo
-echo "IP region information:"
-timeout 200 bash <(curl -4 -fsSL https://raw.githubusercontent.com/FnoUp/ipregion/master/ipregion.sh)
+NET_INFO_LOG="/tmp/vps_install_netinfo.log"
+: > "$NET_INFO_LOG"
 
 echo
-echo "Russian iPerf3 speedtest:"
-timeout 200 bash <(wget -4 -qO- https://github.com/itdoginfo/russian-iperf3-servers/raw/main/speedtest.sh) || echo "iPerf3 speedtest failed or timed out"
+echo "IP region information:" | tee -a "$NET_INFO_LOG"
+{ timeout 200 bash <(curl -4 -fsSL https://raw.githubusercontent.com/FnoUp/ipregion/master/ipregion.sh) 2>&1 \
+    || echo "ipregion check failed or timed out"; } | tee -a "$NET_INFO_LOG"
+
+echo
+echo "Russian iPerf3 speedtest:" | tee -a "$NET_INFO_LOG"
+{ timeout 200 bash <(wget -4 -qO- https://github.com/itdoginfo/russian-iperf3-servers/raw/main/speedtest.sh) 2>&1 \
+    || echo "iPerf3 speedtest failed or timed out"; } | tee -a "$NET_INFO_LOG"
 
 echo "=================================="
 echo "Installing Fail2Ban..."
@@ -111,6 +116,16 @@ echo "=================================="
 echo "Installation completed"
 echo "=================================="
 
+echo
+echo "=================================="
+echo "Network & Speedtest Summary"
+echo "=================================="
+if [ -s "$NET_INFO_LOG" ]; then
+    cat "$NET_INFO_LOG"
+else
+    echo "(no data captured)"
+fi
+echo "=================================="
 
 echo
 read -r -p "Reboot server now? [y/N]: " reboot_answer
