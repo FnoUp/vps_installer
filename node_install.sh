@@ -110,6 +110,59 @@ echo "=================================="
 
 bash <(curl -4 -Ls "https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh")
 
+echo "=================================="
+echo "Setting up custom geo-data (freedomnet.life) for domain-based routing"
+echo "=================================="
+
+GEO_DIR="/var/lib/remnanode"
+COMPOSE_FILE="/opt/remnanode/docker-compose.yml"
+
+if [ -f "$COMPOSE_FILE" ]; then
+    mkdir -p "$GEO_DIR"
+
+    curl -4 -sL --max-time 30 -o "$GEO_DIR/geoip-freedomnet.dat" "https://geo.freedomnet.life/geoip.dat" \
+        && echo "geoip-freedomnet.dat скачан" || echo "WARNING: не удалось скачать geoip-freedomnet.dat"
+    curl -4 -sL --max-time 30 -o "$GEO_DIR/geosite-freedomnet.dat" "https://geo.freedomnet.life/geosite.dat" \
+        && echo "geosite-freedomnet.dat скачан" || echo "WARNING: не удалось скачать geosite-freedomnet.dat"
+
+    if ! grep -q "geoip-freedomnet.dat" "$COMPOSE_FILE"; then
+        cp "$COMPOSE_FILE" "$COMPOSE_FILE.bak.$(date +%F-%H%M%S)"
+        python3 - "$COMPOSE_FILE" << 'PYEOF'
+import re, sys
+path = sys.argv[1]
+lines = open(path).readlines()
+out = []
+inserted = False
+for line in lines:
+    out.append(line)
+    if not inserted and re.match(r'^(\s*)volumes:\s*$', line):
+        indent = re.match(r'^(\s*)volumes:', line).group(1) + "  "
+        out.append(f'{indent}- /var/lib/remnanode/geoip-freedomnet.dat:/usr/local/share/xray/geoip-freedomnet.dat\n')
+        out.append(f'{indent}- /var/lib/remnanode/geosite-freedomnet.dat:/usr/local/share/xray/geosite-freedomnet.dat\n')
+        inserted = True
+open(path, "w").writelines(out)
+print("volumes добавлены" if inserted else "WARNING: секция volumes не найдена в docker-compose.yml, добавь монтирование вручную")
+PYEOF
+
+        echo "Перезапускаем remnanode с новыми volume..."
+        (cd /opt/remnanode && { docker compose down && docker compose up -d --remove-orphans; } 2>/dev/null \
+            || { docker-compose down && docker-compose up -d --remove-orphans; }) \
+            || echo "WARNING: не удалось перезапустить remnanode — примени volume-маунты и перезапусти вручную"
+    else
+        echo "Volume для geo-freedomnet уже настроен, пропускаем правку docker-compose.yml"
+    fi
+
+    cat > /etc/cron.d/geo-freedomnet-update << 'CRON_EOF'
+0 4 * * 0 root curl -4 -sL --max-time 30 -o /var/lib/remnanode/geoip-freedomnet.dat https://geo.freedomnet.life/geoip.dat && curl -4 -sL --max-time 30 -o /var/lib/remnanode/geosite-freedomnet.dat https://geo.freedomnet.life/geosite.dat
+CRON_EOF
+    echo "Еженедельное обновление гео-файлов настроено (cron, вс 04:00)"
+else
+    echo "WARNING: $COMPOSE_FILE не найден — пропускаем настройку кастомных гео-данных."
+    echo "Если нода Remnawave установлена, но по другому пути — настрой geo-freedomnet.dat вручную:"
+    echo "  https://geo.freedomnet.life/geoip.dat, geosite.dat -> /var/lib/remnanode/"
+    echo "  + volume mounts в docker-compose.yml на /usr/local/share/xray/geoip-freedomnet.dat"
+fi
+
 ufw --force enable
 
 echo "=================================="
