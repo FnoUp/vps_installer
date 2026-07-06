@@ -133,9 +133,14 @@ path = sys.argv[1]
 lines = open(path).readlines()
 out = []
 inserted = False
+in_remnanode = False
 for line in lines:
     out.append(line)
-    if not inserted and re.match(r'^(\s*)volumes:\s*$', line):
+    if re.match(r'^  remnanode:\s*$', line):
+        in_remnanode = True
+    elif re.match(r'^  \S', line):
+        in_remnanode = False
+    if in_remnanode and not inserted and re.match(r'^(\s*)volumes:\s*$', line):
         indent = re.match(r'^(\s*)volumes:', line).group(1) + "  "
         out.append(f'{indent}- /var/lib/remnanode/geoip-freedomnet.dat:/usr/local/share/xray/geoip-freedomnet.dat\n')
         out.append(f'{indent}- /var/lib/remnanode/geosite-freedomnet.dat:/usr/local/share/xray/geosite-freedomnet.dat\n')
