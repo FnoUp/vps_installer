@@ -7,6 +7,13 @@ echo "=================================="
 
 export DEBIAN_FRONTEND=noninteractive
 
+# SKIP_REMNAWAVE_INSTALL=1 — не запускать встроенный интерактивный установщик
+# eGamesAPI ниже: используется, когда Remnawave/нода ставятся отдельным шагом
+# (например VPN Node Manager делает это сам через API, без интерактивного меню).
+SKIP_REMNAWAVE_INSTALL="${SKIP_REMNAWAVE_INSTALL:-}"
+# AUTO_REBOOT=y|n — пропустить финальный вопрос про перезагрузку.
+AUTO_REBOOT="${AUTO_REBOOT:-ask}"
+
 if [ "$EUID" -ne 0 ]; then
   echo "Запусти скрипт от root"
   exit 1
@@ -104,11 +111,18 @@ echo "=================================="
 echo "Fail2Ban installed and started"
 echo "=================================="
 
-echo "=================================="
-echo "Installing Remnawave Reverse Proxy"
-echo "=================================="
+if [[ "$SKIP_REMNAWAVE_INSTALL" == "1" ]]; then
+    echo "=================================="
+    echo "SKIP_REMNAWAVE_INSTALL=1 — пропускаю встроенный интерактивный установщик eGamesAPI"
+    echo "(Remnawave/нода ставятся отдельным неинтерактивным шагом)"
+    echo "=================================="
+else
+    echo "=================================="
+    echo "Installing Remnawave Reverse Proxy"
+    echo "=================================="
 
-bash <(curl -4 -Ls "https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh")
+    bash <(curl -4 -Ls "https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh")
+fi
 
 echo "=================================="
 echo "Setting up custom geo-data (freedomnet.life) for domain-based routing"
@@ -186,7 +200,11 @@ fi
 echo "=================================="
 
 echo
-read -r -p "Reboot server now? [y/N]: " reboot_answer
+if [[ "$AUTO_REBOOT" == "ask" ]]; then
+    read -r -p "Reboot server now? [y/N]: " reboot_answer
+else
+    reboot_answer="$AUTO_REBOOT"
+fi
 
 case "$reboot_answer" in
   y|Y|yes|YES)
